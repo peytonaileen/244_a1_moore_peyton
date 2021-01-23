@@ -8,3 +8,141 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+
+### Attaching Packages 
+
+```{r Installing neccessary packages}
+
+library(tidyverse)
+library(janitor)
+library(here)
+library(readxl)
+library(lubridate)
+library(wesanderson)
+library(treemap)
+library(patchwork)
+
+
+```
+
+
+### Read in the data and do some cleaning
+
+```{r Reading in data }
+frogs <- read_excel(here::here("data", "sierra_amphibians.xlsx")) %>% 
+  clean_names() %>% 
+  mutate(across(where(is.character), tolower)) %>% 
+  mutate(survey_date = ymd(survey_date))
+  
+```
+
+
+### Data Exploration
+
+```{r Data exploration}
+
+ggplot(data = frogs, aes(x = amphibian_species, y = amphibian_number))+
+  geom_jitter(aes(color = amphibian_life_stage, 
+                  shape = amphibian_location))+
+  theme_bw()
+
+# okay, so there's a lot of tadpoles 
+```
+
+### Visualizing Mountain Yellow-Legged Frogs (*Rana muscosa*)
+
+
+#### Part 1: Rana muscosa totals 
+
+```{r}
+# Rana muscosa is coded as species code "ramu" 
+
+ramu_data <- frogs %>% 
+  filter(amphibian_species == "ramu", 
+         amphibian_life_stage != "eggmass") %>% 
+  mutate(year  = lubridate::year(survey_date)) 
+
+
+ramu_sum <- ramu_data %>% 
+  select(year, amphibian_species, amphibian_life_stage, amphibian_number) %>% 
+  group_by(amphibian_life_stage, year) %>% 
+  summarise(total = sum(amphibian_number, na.rm = TRUE)) %>% 
+  mutate( year = as.factor(year))
+
+
+```
+
+```{r Visualizing life stages over time }
+
+frog_life <- ggplot(data = ramu_sum, 
+       aes(y = year, 
+           x = total)) +
+  geom_col(aes(fill = amphibian_life_stage,
+               color = amphibian_life_stage,
+               alpha = 0.85),
+           show.legend = FALSE,
+           position = position_dodge(), 
+           stat = "identity")+
+  scale_fill_manual(values = wes_palette("Cavalcanti1"))+
+  scale_color_manual(values = wes_palette("Cavalcanti1"))+
+  scale_x_continuous(expand= c(0,0))+
+  theme_bw()+
+  labs(x = "Total (Number of Observations)", 
+       y = "Year", 
+       title = "Number of Observed Mountain \nYellow-Legged Frogs (Rana \nmuscosa) Life Stages from \n1995-2002")+
+  coord_flip()
+
+```
+
+
+#### Part 2
+
+
+```{r Grouping by lakes }
+ramu_lakes <- ramu_data %>% 
+  filter(amphibian_life_stage != "tadpole") %>% 
+  group_by(lake_id) %>% 
+  summarize(total = sum(amphibian_number, na.rm = TRUE))
+
+lakes_top <- ramu_lakes %>% 
+  slice_max(total, n = 5) %>% 
+  mutate(lake_id = as.factor(paste("Lake", lake_id))) %>% 
+  mutate(lake_id = fct_reorder(lake_id, total))
+  
+
+```
+
+
+```{r Create column graph }
+
+frog_lake <- ggplot(data = lakes_top, aes(x = total, 
+                             y = lake_id))+
+  geom_col(aes(fill = lake_id,
+               color = lake_id, 
+               alpha = 0.85), 
+           show.legend = FALSE)+
+  scale_fill_manual(values = wes_palette("Cavalcanti1"))+
+  scale_color_manual(values = wes_palette("Cavalcanti1"))+
+  scale_x_continuous(expand= c(0,0))+
+  labs(x = "Total (Number of Adult and Subadults)", 
+       y = "Lake ID", 
+       title = "Total Number of Adult and \n Subadult Mountain Yellow-\nLegged Frogs (Rana muscosa)")+
+  theme_bw()
+  
+  
+  
+
+
+
+```
+
+```{r Combining graphs with patchwork}
+
+frog_comb <- (frog_life | frog_lake)
+
+frog_comb
+```
+
+
+
