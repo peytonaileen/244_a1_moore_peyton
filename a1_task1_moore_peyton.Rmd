@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 ```
 
 
@@ -125,7 +125,7 @@ frog_lake <- ggplot(data = lakes_top, aes(x = total,
   scale_fill_manual(values = wes_palette("Cavalcanti1"))+
   scale_color_manual(values = wes_palette("Cavalcanti1"))+
   scale_x_continuous(expand= c(0,0))+
-  labs(x = "Total (Number of Adult and Subadults)", 
+  labs(x = "Total (Number of Observations)", 
        y = "Lake ID", 
        title = "Total Number of Adult and \n Subadult Mountain Yellow-\nLegged Frogs (Rana muscosa)")+
   theme_bw()
