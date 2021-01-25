@@ -30,6 +30,7 @@ library(patchwork)
 ### Read in the data and do some cleaning
 
 ```{r Reading in data }
+
 frogs <- read_excel(here::here("data", "sierra_amphibians.xlsx")) %>% 
   clean_names() %>% 
   mutate(across(where(is.character), tolower)) %>% 
@@ -57,13 +58,17 @@ ggplot(data = frogs, aes(x = amphibian_species, y = amphibian_number))+
 
 ```{r}
 # Rana muscosa is coded as species code "ramu" 
+# use lubridate to extract the years 
 
 ramu_data <- frogs %>% 
   filter(amphibian_species == "ramu", 
          amphibian_life_stage != "eggmass") %>% 
   mutate(year  = lubridate::year(survey_date)) 
 
-
+# select only relevant columns 
+# group by life stage and year
+# use summarise to find total # of obs 
+# make year a factor 
 ramu_sum <- ramu_data %>% 
   select(year, amphibian_species, amphibian_life_stage, amphibian_number) %>% 
   group_by(amphibian_life_stage, year) %>% 
@@ -74,6 +79,7 @@ ramu_sum <- ramu_data %>%
 ```
 
 ```{r Visualizing life stages over time }
+# create a column graph of the number of obs frogs in different life stages over time 
 
 frog_life <- ggplot(data = ramu_sum, 
        aes(y = year, 
@@ -100,11 +106,15 @@ frog_life <- ggplot(data = ramu_sum,
 
 
 ```{r Grouping by lakes }
+# now group and summarise data by lakes 
+
 ramu_lakes <- ramu_data %>% 
   filter(amphibian_life_stage != "tadpole") %>% 
   group_by(lake_id) %>% 
   summarize(total = sum(amphibian_number, na.rm = TRUE))
 
+
+# make lake a factor and add the word "lake" in front of id 
 lakes_top <- ramu_lakes %>% 
   slice_max(total, n = 5) %>% 
   mutate(lake_id = as.factor(paste("Lake", lake_id))) %>% 
@@ -115,6 +125,8 @@ lakes_top <- ramu_lakes %>%
 
 
 ```{r Create column graph }
+
+# create a column graph of observed adults and subadults at different lakes
 
 frog_lake <- ggplot(data = lakes_top, aes(x = total, 
                              y = lake_id))+
@@ -138,6 +150,7 @@ frog_lake <- ggplot(data = lakes_top, aes(x = total,
 ```
 
 ```{r Combining graphs with patchwork}
+# combine figures using patchwork
 
 frog_comb <- (frog_life | frog_lake)
 

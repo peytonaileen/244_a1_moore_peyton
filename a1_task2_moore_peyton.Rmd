@@ -20,11 +20,13 @@ library(viridis)
 ```
 
 ```{r Read in data }
-
+#Read in data, clean names, and select the columns I want to use in my pca 
 world_env <- read_csv(here::here("data", "world_env_vars.csv")) %>% 
   clean_names() %>% 
   select( country, elevation, cropland_cover, tree_canopy_cover, isothermality, rain_mean_annual, temp_mean_annual, wind, cloudiness) %>% 
   drop_na()
+
+
 
 world_pca <- world_env %>% 
   select(-country) %>% 
@@ -34,7 +36,14 @@ world_pca <- world_env %>%
 
 ```
 
+### Introductory Summary 
+
+This data from ***https://earthengine.google.com/*** contains information about environmental and climatic variables by country. Here we will be exploring the relationship between environmental variables and annual mean temperature. To visualize the impacts of numerous variables at the same time, we will be using Principle Components Analysis (PCA) to find the indicators with the greatest impact on variance in annual mean temperature. 
+
+
+
 ```{r PCA analysis }
+# plot PCA using autoplot
 
 autoplot(world_pca, 
          data = world_env, 
@@ -47,16 +56,22 @@ autoplot(world_pca,
          alpha = 0.5)+
   scale_colour_viridis(option = "B") +
   theme_minimal()+
-  labs(title = "PCA Bi-Plot of World Environmental Data")
+  labs(title = "PCA Bi-Plot of World Environmental Data by Country")
 
+# Variance explained by each principle component
+#screeplot(world_pca, type = "lines")
 
-screeplot(world_pca, type = "lines")
-
-
-world_pca$rotation
+# See the loadings (weighting for each principle component)
+#world_pca$rotation
 
 
 
 
 ```
 
+
+### Key Takeaways 
+
+- Mean Annual Temperature is negatively related with both cropland cover and elevation. 
+- Cloudiness, tree canopy cover and mean annual rainfall are all positively correlated with one another. 
+- Countries with a low mean annual temperature tend to also have a high cropland cover.
